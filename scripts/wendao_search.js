@@ -10,7 +10,7 @@
 const { execSync } = require('child_process');
 const path = require('path');
 
-const TOKEN = (process.env.WENDAO_API_KEY || "").trim();
+const TOKEN = (process.env.WENDAO_API_KEY || "[REDACTED]").trim();
 const WENDAO_SCRIPT = path.join(__dirname, 'wendao_query.js');
 
 // 航空公司代码映射

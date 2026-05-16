@@ -2,7 +2,7 @@
 // 兼容：Windows / macOS / Linux (依赖 Node.js v18+)
 // query 取值优先级：命令行第一个参数 > 环境变量 WENDAO_QUERY（勿使用占位符，须为用户的真实问话）
 // token：仅 process.env.WENDAO_API_KEY（平台配置或用户在对话中提供后在本次命令中设置）
-const TOKEN = (process.env.WENDAO_API_KEY || "").trim();
+const TOKEN = (process.env.WENDAO_API_KEY || "[REDACTED]").trim();
 const USER_QUERY = (process.argv[2] || process.env.WENDAO_QUERY || "").trim();
 
 async function callWendao(token, query) {
