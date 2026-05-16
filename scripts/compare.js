@@ -102,7 +102,7 @@ function formatTable(flights, args) {
     return header + dateInfo + '⚠️ 未找到航班信息，请检查城市名称或日期是否正确。';
   }
   
-  let table = '| # | 航空公司 | 航线 | 价格(CNY) | 数据源 | 出发日期 |\n';
+  let table = '| # | 航空公司 | 航线 | 价格(CNY) | 数据源 | 购票链接 |\n';
   table += '|---|---------|------|-----------|--------|----------|\n';
   
   flights.forEach((f, i) => {
@@ -110,14 +110,30 @@ function formatTable(flights, args) {
       ? f.segments.map(s => s.from.split(/[,，]/)[0]).join('→') + '→' + (f.to || args.to).split(/[,，]/)[0]
       : `${f.from || args.from}→${f.to || args.to}`;
     
-    table += `| ${i + 1} | ${f.airline} | ${route} | ${formatPrice(f.price)} | ${f.source} | ${args.depart} |\n`;
+    // 购票链接
+    const bookUrl = f.jumpUrl || f.bookUrl || '';
+    let linkCell = '-';
+    if (bookUrl) {
+      if (bookUrl.startsWith('superlink://')) {
+        // 携程 deeplink，显示为"携程App"
+        linkCell = '[携程App](#' + encodeURIComponent(bookUrl.substring(0, 50)) + ')';
+      } else if (bookUrl.startsWith('http')) {
+        // 飞猪网页链接
+        linkCell = '[购买](' + bookUrl + ')';
+      }
+    }
+    
+    table += `| ${i + 1} | ${f.airline} | ${route} | ${formatPrice(f.price)} | ${f.source} | ${linkCell} |\n`;
   });
   
   // 找出最低价
   const lowest = flights.reduce((min, f) => f.price < min.price ? f : min, flights[0]);
   const tip = `\n💡 建议：${lowest.source}价格最低 ${formatPrice(lowest.price)}（${lowest.airline}）`;
   
-  return header + dateInfo + table + tip;
+  // 添加链接说明
+  const linkNote = '\n\n📱 点击「购买」跳转飞猪网页购票。携程航班需在手机上打开携程App。';
+  
+  return header + dateInfo + table + tip + linkNote;
 }
 
 async function main() {

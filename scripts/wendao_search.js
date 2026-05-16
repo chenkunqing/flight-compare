@@ -103,6 +103,19 @@ function parseFlightsFromText(text, args) {
     const arrStationMatch = block.match(/到达[：:].*?(东京|上海|北京|广州|香港|台北|大阪|曼谷|新加坡|吉隆坡|首尔|河内|胡志明|金边|暹粒|马尼拉|雅加达|巴厘岛|悉尼|墨尔本|奥克兰|伦敦|巴黎|法兰克福|纽约|洛杉矶|迪拜|多哈|莫斯科|布达佩斯|尼斯|罗马|米兰|威尼斯|巴塞罗那|马德里|里斯本|开罗|内罗毕|毛里求斯|南非|开普敦|肯尼亚|巴西|圣保罗|里约|瑞士|苏黎世|日内瓦|冰岛|雷克雅未克)\s*(\S+)/);
     const arrStation = arrStationMatch ? `${arrStationMatch[1]}${arrStationMatch[2]}` : args.to;
     
+    // 提取购票链接（superlink deeplink）
+    const linkMatch = block.match(/<(superlink:[^>]+)>/);
+    let bookUrl = '';
+    if (linkMatch) {
+      // 解码 URL 编码的链接
+      try {
+        const decoded = decodeURIComponent(decodeURIComponent(linkMatch[1]));
+        bookUrl = decoded;
+      } catch (e) {
+        bookUrl = linkMatch[1];
+      }
+    }
+    
     // 判断是否为直飞
     const isDirect = !block.includes('转机') && !block.includes('中转');
     
@@ -117,7 +130,8 @@ function parseFlightsFromText(text, args) {
       flightNo: primaryFlightNo,
       flightNos,
       isDirect,
-      route: `${depStation} → ${arrStation}`
+      route: `${depStation} → ${arrStation}`,
+      bookUrl  // 携程 deeplink
     });
   }
   
