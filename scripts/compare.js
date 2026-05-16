@@ -25,79 +25,36 @@ function parseArgs(args) {
   return parsed;
 }
 
-// 查询携程问道
+// 查询携程问道（使用 wendao_search.js 解析脚本）
 function queryWendao(args) {
-  const from = args.from;
-  const to = args.to;
-  const depart = args.depart;
-  const ret = args.return;
+  const scriptPath = path.join(__dirname, 'wendao_search.js');
+  const params = [
+    scriptPath,
+    '--from', args.from,
+    '--to', args.to,
+    '--depart', args.depart
+  ];
   
-  let queryStr = `${depart}${from}到${to}`;
-  if (ret) {
-    queryStr += `，${ret}返回的往返机票`;
-  } else {
-    queryStr += '的单程机票';
+  if (args.return) {
+    params.push('--return', args.return);
   }
   
-  const scriptPath = path.join(__dirname, 'wendao_query.js');
-  const env = { ...process.env };
-  
   try {
-    const result = spawnSync('node', [scriptPath, queryStr], {
+    const result = spawnSync('node', params, {
       encoding: 'utf8',
       timeout: 15000,
-      env
+      env: { ...process.env, WENDAO_API_KEY: process.env.WENDAO_API_KEY || '' }
     });
     
     if (result.status !== 0) {
-      return { source: '携程', error: result.stderr || '查询失败' };
+      return { source: '携程', error: result.stderr || '查询失败', flights: [] };
     }
     
     const data = JSON.parse(result.stdout);
-    return parseWendaoResponse(data, args);
+    return data;
   } catch (err) {
-    return { source: '携程', error: err.message };
+    return { source: '携程', error: err.message, flights: [] };
   }
-}
-
-// 解析携程问道响应
-function parseWendaoResponse(data, args) {
-  const flights = [];
-  
-  // 尝试解析携程返回的数据结构
-  if (data && data.data) {
-    const items = Array.isArray(data.data) ? data.data : 
-                  (data.data.flights || data.data.results || []);
-    
-    for (const item of items) {
-      flights.push({
-        airline: item.airline || item.airlineName || '未知',
-        from: item.from || item.departure || args.from,
-        to: item.to || item.arrival || args.to,
-        price: item.price || item.totalPrice || 0,
-        cabin: item.cabin || item.class || '经济舱',
-        segments: item.segments || [],
-        time: item.time || item.duration || ''
-      });
-    }
-  }
-  
-  // 如果 data 直接是数组
-  if (Array.isArray(data)) {
-    for (const item of data) {
-      flights.push({
-        airline: item.airline || item.airlineName || '未知',
-        from: item.from || item.departure || args.from,
-        to: item.to || item.arrival || args.to,
-        price: item.price || item.totalPrice || 0,
-        cabin: item.cabin || item.class || '经济舱',
-        segments: item.segments || [],
-        time: item.time || item.duration || ''
-      });
-    }
-  }
-  
-  return { source: '携程', flights };
 }
 
 // 查询飞猪(flyai)
